@@ -1,0 +1,136 @@
+<!-- Secretlab Key-Value Store API -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secretlab KVStore API</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+        }
+        h1 {
+            color: #667eea;
+            margin-top: 0;
+        }
+        h2 {
+            color: #764ba2;
+            font-size: 18px;
+            margin-top: 30px;
+        }
+        code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: "Courier New", monospace;
+        }
+        .endpoint {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .endpoint strong {
+            color: #667eea;
+        }
+        .status {
+            display: inline-block;
+            background: #10b981;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        ul {
+            line-height: 1.8;
+        }
+        a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔑 Secretlab Key-Value Store API</h1>
+        
+        <p><strong>Status:</strong> <span class="status">✓ Running</span></p>
+        
+        <p>A production-quality, version-controlled key-value store with time-travel query capabilities.</p>
+
+        <h2>📚 API Endpoints</h2>
+
+        <div class="endpoint">
+            <strong>POST</strong> <code>/api/v1/object</code>
+            <p>Store key-value pairs with UTC timestamp</p>
+        </div>
+
+        <div class="endpoint">
+            <strong>GET</strong> <code>/api/v1/object/{key}</code>
+            <p>Get the latest value for a key</p>
+        </div>
+
+        <div class="endpoint">
+            <strong>GET</strong> <code>/api/v1/object/{key}?timestamp={unix}</code>
+            <p>Get value at a specific point in time (time-travel query)</p>
+        </div>
+
+        <div class="endpoint">
+            <strong>GET</strong> <code>/api/v1/object/get_all_records</code>
+            <p>Get the latest value for all keys</p>
+        </div>
+
+        <h2>📖 Documentation</h2>
+        <ul>
+            <li><a href="README.md">Full API Documentation</a></li>
+            <li><a href="PROJECT_INFO.md">Project Information</a></li>
+            <li>Run tests: <code>php artisan test</code></li>
+            <li>Start server: <code>php artisan serve</code></li>
+        </ul>
+
+        <h2>🚀 Quick Start</h2>
+        <pre style="background: #f5f5f5; padding: 15px; border-radius: 4px; overflow-x: auto;">
+# Store a value
+curl -X POST http://localhost:8000/api/v1/object \
+  -H "Content-Type: application/json" \
+  -d '{"mykey": "myvalue"}'
+
+# Get the latest value
+curl http://localhost:8000/api/v1/object/mykey
+
+# Get all records
+curl http://localhost:8000/api/v1/object/get_all_records
+        </pre>
+
+        <h2>🛠 Built With</h2>
+        <ul>
+            <li>Laravel 11</li>
+            <li>PHP 8.2+</li>
+            <li>MySQL 8 / PostgreSQL</li>
+            <li>PHPUnit with 80%+ coverage</li>
+            <li>GitHub Actions CI/CD</li>
+        </ul>
+
+        <hr style="margin-top: 40px; border: none; border-top: 1px solid #eee;">
+        <p style="font-size: 12px; color: #999;">Secretlab Technical Exercise | Version-Controlled Key-Value Store</p>
+    </div>
+</body>
+</html>

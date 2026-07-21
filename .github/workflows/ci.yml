@@ -1,0 +1,111 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DB_CONNECTION: sqlite
+  DB_DATABASE: ":memory:"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        php-version: ['8.2', '8.3']
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ matrix.php-version }}
+        extensions: pdo, pdo_sqlite, sqlite3
+        coverage: xdebug
+
+    - name: Get Composer Cache Directory
+      id: composer-cache
+      run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+    - name: Cache Composer Dependencies
+      uses: actions/cache@v4
+      with:
+        path: ${{ steps.composer-cache.outputs.dir }}
+        key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+        restore-keys: ${{ runner.os }}-composer-
+
+    - name: Install Dependencies
+      run: composer install --no-interaction --prefer-dist
+
+    - name: Generate Application Key
+      run: php artisan key:generate --env=testing
+
+    - name: Run Tests with Coverage
+      run: php artisan test --coverage --min=80
+
+    - name: Upload Coverage Reports
+      uses: codecov/codecov-action@v4
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        token: ${{ secrets.CODECOV_TOKEN }}
+        fail_ci_if_error: false
+
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+
+    - name: Install Dependencies
+      run: composer install --no-interaction --prefer-dist
+
+    - name: Run Pint Linter
+      run: php artisan pint --test
+
+  deploy:
+    needs: [test, lint]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Deploy to Railway
+      uses: bervProject/railway-deploy@main
+      with:
+        railway_token: ${{ secrets.RAILWAY_TOKEN }}
+        service: ${{ secrets.RAILWAY_SERVICE }}
+
+    - name: Setup Node.js for Railway CLI
+      if: ${{ secrets.RAILWAY_PROJECT_ID != '' && secrets.RAILWAY_ENVIRONMENT_ID != '' }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Run Production Migrations on Railway
+      if: ${{ secrets.RAILWAY_PROJECT_ID != '' && secrets.RAILWAY_ENVIRONMENT_ID != '' }}
+      run: |
+        npm install --global @railway/cli
+        railway run \
+          --service "${{ secrets.RAILWAY_SERVICE }}" \
+          --project "${{ secrets.RAILWAY_PROJECT_ID }}" \
+          --environment "${{ secrets.RAILWAY_ENVIRONMENT_ID }}" \
+          php artisan migrate --force

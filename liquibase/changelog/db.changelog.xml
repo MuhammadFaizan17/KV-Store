@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <changeSet id="001-create-key-value-entries" author="secretlab">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="key_value_entries"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="key_value_entries">
+            <column name="id" type="BIGINT UNSIGNED" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="key" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="BIGINT UNSIGNED" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="value" type="JSON">
+                <constraints nullable="false"/>
+            </column>
+            <column name="timestamp" type="BIGINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+
+        <createIndex tableName="key_value_entries" indexName="key_value_entries_key_timestamp_version_index">
+            <column name="key"/>
+            <column name="timestamp"/>
+            <column name="version"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="002-add-version-column-if-missing" author="secretlab">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="key_value_entries"/>
+                <not>
+                    <columnExists tableName="key_value_entries" columnName="version"/>
+                </not>
+            </and>
+        </preConditions>
+
+        <addColumn tableName="key_value_entries">
+            <column name="version" type="BIGINT UNSIGNED" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="003-backfill-key-versions" author="secretlab" dbms="mysql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="key_value_entries"/>
+                <columnExists tableName="key_value_entries" columnName="version"/>
+            </and>
+        </preConditions>
+
+        <sql>
+            UPDATE key_value_entries target
+            INNER JOIN (
+                SELECT
+                    id,
+                    ROW_NUMBER() OVER (PARTITION BY `key` ORDER BY `timestamp` ASC, id ASC) AS computed_version
+                FROM key_value_entries
+            ) ranked ON ranked.id = target.id
+            SET target.version = ranked.computed_version
+            WHERE target.version IS NULL OR target.version = 0;
+        </sql>
+    </changeSet>
+
+    <changeSet id="004-drop-redundant-key-index" author="secretlab" dbms="mysql">
+        <preConditions onFail="MARK_RAN">
+            <indexExists tableName="key_value_entries" indexName="key_value_entries_key_index"/>
+        </preConditions>
+
+        <dropIndex tableName="key_value_entries" indexName="key_value_entries_key_index"/>
+    </changeSet>
+
+    <changeSet id="005-create-idempotency-keys" author="secretlab">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="idempotency_keys"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="idempotency_keys">
+            <column name="id" type="BIGINT UNSIGNED" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="key" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="idempotency_keys_key_unique"/>
+            </column>
+            <column name="request_hash" type="VARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status_code" type="SMALLINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+            <column name="response_body" type="JSON">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+
+        <createIndex tableName="idempotency_keys" indexName="idempotency_keys_created_at_index">
+            <column name="created_at"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

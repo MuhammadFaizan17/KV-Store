@@ -1,0 +1,49 @@
+# Laravel Framework Specific
+/vendor/
+/storage/
+/bootstrap/cache/
+.env
+.env.local
+.env.*.local
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# OS
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Test Coverage
+/coverage/
+coverage.xml
+.phpunit.cache/
+
+# Node (if using Laravel Mix/Vite)
+/node_modules/
+/public/js/
+/public/css/
+npm-debug.log
+yarn-error.log
+
+# Database
+*.sqlite
+*.sqlite-journal
+
+# Deployment
+.env.production.local
