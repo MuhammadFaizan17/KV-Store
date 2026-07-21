@@ -41,7 +41,7 @@ All AI-generated code was reviewed, validated, and is production-ready with full
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url> secretlab-kvstore
+   git clone MuhammadFaizan17/KV-Store
    cd secretlab-kvstore
    ```
 
